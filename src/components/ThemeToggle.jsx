@@ -3,18 +3,36 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const ThemeToggle = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Default to dark when there is no stored preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem("theme");
+      if (stored) return stored === "dark";
+    } catch (e) {
+      // ignore (e.g., during SSR or restricted storage)
+    }
+    return true; // default to dark
+  });
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme === "dark") {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      localStorage.setItem("theme", "light");
-      // Ensure the dark class is not present so the default is light
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
+    try {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme === "dark") {
+        setIsDarkMode(true);
+        document.documentElement.classList.add("dark");
+      } else if (storedTheme === "light") {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove("dark");
+      } else {
+        // no stored preference -> default to dark
+        localStorage.setItem("theme", "dark");
+        setIsDarkMode(true);
+        document.documentElement.classList.add("dark");
+      }
+    } catch (e) {
+      // ignore storage errors
+      if (isDarkMode) document.documentElement.classList.add("dark");
+      else document.documentElement.classList.remove("dark");
     }
   }, []);
 
